@@ -175,18 +175,18 @@ serial_numbers! { WebhookType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Webhook {
-	id: WebhookId,
+	pub id: WebhookId,
 	#[serde(rename = "type")]
-	kind: MessageType,
+	pub kind: MessageType,
 	#[serde(rename = "guild_id")]
 	pub server_id: Option<ServerId>,
-	channel_id: ChannelId,
-	user: Option<User>,
-	name: Option<String>,
-	avatar: Option<String>,
-	token: Option<String>,
-	application_id: Option<ApplicationId>,
-	url: Option<String>,
+	pub channel_id: ChannelId,
+	pub user: Option<User>,
+	pub name: Option<String>,
+	pub avatar: Option<String>,
+	pub token: Option<String>,
+	pub application_id: Option<ApplicationId>,
+	pub url: Option<String>,
 }
 serial_decode!(Webhook);
 

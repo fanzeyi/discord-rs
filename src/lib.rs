@@ -1512,6 +1512,12 @@ impl Discord {
 		from_reader(response)
 	}
 
+	/// Get list of webhooks of a channel
+	pub fn get_channel_webhooks(&self, channel: ChannelId) -> Result<Vec<Webhook>> {
+		let response = request!(self, get, "/channels/{}/webhooks", channel);
+		from_reader(response)
+	}
+
 	/// Send a message to webhook
 	pub fn execute_webhook<F: FnOnce(WebhookMessage) -> WebhookMessage>(
 		&self,

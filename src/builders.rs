@@ -85,6 +85,9 @@ builder! {
 
 	/// Inner patch content for the `send_embed` call.
 	EmbedFieldsBuilder(Vec<Value>);
+
+	/// Content for the `execute_webhook` call.
+	WebhookMessage(Object);
 }
 
 macro_rules! set {
@@ -287,9 +290,14 @@ impl SendMessage {
 	/// The given `message_id` must be in the same channel that this message is
 	/// being sent to.
 	pub fn reply(self, message_id: MessageId, mention: bool) -> Self {
-		set!(self, "message_reference", json! {{
-			"message_id": message_id,
-		}}).allowed_mentions(|b| b.replied_user(mention))
+		set!(
+			self,
+			"message_reference",
+			json! {{
+				"message_id": message_id,
+			}}
+		)
+		.allowed_mentions(|b| b.replied_user(mention))
 	}
 
 	/// Change the message's flags.
@@ -301,6 +309,48 @@ impl SendMessage {
 	}
 
 	// TODO: file, payload_json, message_reference
+}
+
+impl WebhookMessage {
+	/// Set the text content of the message.
+	pub fn content(self, content: &str) -> Self {
+		set!(self, "content", content)
+	}
+
+	/// Set the username of the message
+	pub fn username(self, username: &str) -> Self {
+		set!(self, "username", username)
+	}
+
+	/// Set the avatar url of the message
+	pub fn avatar_url(self, avatar_url: &str) -> Self {
+		set!(self, "avatar_url", avatar_url)
+	}
+
+	/// Set to true to use text-to-speech.
+	pub fn tts(self, tts: bool) -> Self {
+		set!(self, "tts", tts)
+	}
+
+	/// Embed rich content.
+	pub fn embed<F: FnOnce(EmbedBuilder) -> EmbedBuilder>(self, f: F) -> Self {
+		set!(self, "embed", EmbedBuilder::__build(f))
+	}
+
+	/// Restrict allowed mentions for this message.
+	pub fn allowed_mentions<F: FnOnce(AllowedMentions) -> AllowedMentions>(self, f: F) -> Self {
+		set!(self, "allowed_mentions", AllowedMentions::__build(f))
+	}
+
+	/// Change the message's flags.
+	///
+	/// Can only be set while editing. Only `SUPPRESS_EMBEDS` can be edited on
+	/// request.
+	pub fn flags(self, flags: MessageFlags) -> Self {
+		set!(self, "flags", flags)
+	}
+
+	// TODO: components, files, payload_json, attachments
 }
 
 impl AllowedMentions {

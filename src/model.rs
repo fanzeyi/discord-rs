@@ -18,7 +18,7 @@ macro_rules! req {
 		try!($opt.ok_or(Error::Decode(
 			concat!("Type mismatch in model:", line!(), ": ", stringify!($opt)),
 			Value::Null
-			)))
+		)))
 	};
 }
 
@@ -141,12 +141,14 @@ id! {
 	RoleId;
 	/// An identifier for an Emoji
 	EmojiId;
+	/// An identifier for a Webhook
+	WebhookId;
 }
 
 impl ServerId {
 	/// Get the `ChannelId` of this server's main text channel.
 	#[inline(always)]
-	#[deprecated(note="No longer guaranteed to exist/be accurate.")]
+	#[deprecated(note = "No longer guaranteed to exist/be accurate.")]
 	pub fn main(self) -> ChannelId {
 		ChannelId(self.0)
 	}
@@ -157,6 +159,36 @@ impl ServerId {
 		RoleId(self.0)
 	}
 }
+
+#[derive(Debug, Clone)]
+pub enum WebhookType {
+	Incoming = 1,
+	ChannelFollower = 2,
+	Application = 3,
+}
+serial_use_mapping!(WebhookType, numeric);
+serial_numbers! { WebhookType;
+	Incoming, 1;
+	ChannelFollower, 2;
+	Application, 3;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Webhook {
+	id: WebhookId,
+	#[serde(rename = "type")]
+	kind: MessageType,
+	#[serde(rename = "guild_id")]
+	pub server_id: Option<ServerId>,
+	channel_id: ChannelId,
+	user: Option<User>,
+	name: Option<String>,
+	avatar: Option<String>,
+	token: Option<String>,
+	application_id: Option<ApplicationId>,
+	url: Option<String>,
+}
+serial_decode!(Webhook);
 
 /// A mention targeted at a specific user, channel, or other entity.
 ///

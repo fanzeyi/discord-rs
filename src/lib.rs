@@ -649,9 +649,11 @@ impl Discord {
 			)
 		}
 
-		let tls = hyper_native_tls::NativeTlsClient::new().expect("Error initializing NativeTlsClient");
+		let tls =
+			hyper_native_tls::NativeTlsClient::new().expect("Error initializing NativeTlsClient");
 		let connector = hyper::net::HttpsConnector::new(tls);
-		let mut request = hyper::client::Request::with_connector(hyper::method::Method::Post, url, &connector)?;
+		let mut request =
+			hyper::client::Request::with_connector(hyper::method::Method::Post, url, &connector)?;
 		request
 			.headers_mut()
 			.set(hyper::header::Authorization(self.token.clone()));
@@ -1478,7 +1480,9 @@ impl Discord {
 		shard_id: u8,
 		total_shards: u8,
 	) -> Result<(Connection, ReadyEvent)> {
-		self.connection_builder()?.with_shard(shard_id, total_shards).connect()
+		self.connection_builder()?
+			.with_shard(shard_id, total_shards)
+			.connect()
 	}
 
 	/// Prepare to establish a websocket connection over which events can be
@@ -1493,8 +1497,33 @@ impl Discord {
 		let mut value: BTreeMap<String, String> = serde_json::from_reader(response)?;
 		match value.remove("url") {
 			Some(url) => Ok(url),
-			None => Err(Error::Protocol("Response missing \"url\" in Discord::get_gateway_url()"))
+			None => Err(Error::Protocol(
+				"Response missing \"url\" in Discord::get_gateway_url()",
+			)),
 		}
+	}
+
+	/// Create a webhook with the given name
+	pub fn create_webhook(&self, channel: ChannelId, name: &str) -> Result<Webhook> {
+		let map = json! {{ "name": name }};
+		let body = serde_json::to_string(&map)?;
+		let response = request!(self, post(body), "/channels/{}/webhooks", channel);
+
+		from_reader(response)
+	}
+
+	/// Send a message to webhook
+	pub fn execute_webhook<F: FnOnce(WebhookMessage) -> WebhookMessage>(
+		&self,
+		webhook: WebhookId,
+		token: &str,
+		f: F,
+	) -> Result<()> {
+		let map = WebhookMessage::__build(f);
+		let body = serde_json::to_string(&map)?;
+		let response = request!(self, post(body), "/webhooks/{}/{}", webhook, token);
+
+		check_empty(response)
 	}
 }
 

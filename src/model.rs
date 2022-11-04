@@ -445,7 +445,7 @@ impl User {
 /// Information about a member of a server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Member {
-	pub user: User,
+	pub user: Option<User>,
 	pub roles: Vec<RoleId>,
 	pub nick: Option<String>,
 	pub joined_at: String,
@@ -459,9 +459,15 @@ impl Member {
 	pub fn display_name(&self) -> &str {
 		if let Some(name) = self.nick.as_ref() {
 			name
+		} else if let Some(user) = &self.user {
+			user.name.as_str()
 		} else {
-			&self.user.name
+			"<Unknown>"
 		}
+	}
+
+	pub fn id(&self) -> UserId {
+		self.user.as_ref().map(|u| u.id).unwrap_or(UserId(0))
 	}
 }
 
@@ -869,6 +875,7 @@ pub struct Message {
 	#[serde(rename = "type")]
 	pub kind: MessageType,
 
+	pub member: Option<Member>,
 	pub author: User,
 	pub mention_everyone: bool,
 	pub mentions: Vec<User>,
@@ -1424,7 +1431,7 @@ impl LiveServer {
 			}
 		};
 		let mut permissions = everyone.permissions;
-		let member = match self.members.iter().find(|u| u.user.id == user) {
+		let member = match self.members.iter().find(|u| u.id() == user) {
 			Some(u) => u,
 			None => return everyone.permissions,
 		};
@@ -1434,7 +1441,9 @@ impl LiveServer {
 			} else {
 				warn!(
 					"perms: {:?} on {:?} has non-existent role {:?}",
-					member.user.id, self.id, role
+					member.user.as_ref().map(|x| x.id).unwrap_or(UserId(0)),
+					self.id,
+					role
 				);
 			}
 		}

@@ -476,6 +476,26 @@ impl Discord {
 		))
 	}
 
+	/// Start Thread from Message
+	pub fn start_thread(
+		&self,
+		channel: ChannelId,
+		message: MessageId,
+		name: &str,
+	) -> Result<PublicChannel> {
+		let body = serde_json::to_string(&serde_json::json!({
+			"name": name,
+		}))?;
+		let response = request!(
+			self,
+			post(body),
+			"/channels/{}/messages/{}/threads",
+			channel,
+			message
+		);
+		PublicChannel::decode(serde_json::from_reader(response)?)
+	}
+
 	/// Send a message to a given channel.
 	///
 	/// The `nonce` will be returned in the result and also transmitted to other

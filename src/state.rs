@@ -260,11 +260,12 @@ impl State {
 						.map(|srv| {
 							// If the user was modified, update the member list
 							if let Some(user) = presence.user.as_ref() {
-								srv.members.iter_mut().find(|u| u.user.id == user.id).map(
-									|member| {
-										member.user.clone_from(user);
-									},
-								);
+								srv.members
+									.iter_mut()
+									.find(|u| u.id() == user.id)
+									.map(|member| {
+										member.user.clone_from(&Some(user.clone()));
+									});
 							}
 							update_presence(&mut srv.presences, presence);
 						});
@@ -340,9 +341,9 @@ impl State {
 					.map(|srv| {
 						srv.members
 							.iter_mut()
-							.find(|m| m.user.id == user.id)
+							.find(|m| m.id() == user.id)
 							.map(|member| {
-								member.user.clone_from(user);
+								member.user.clone_from(&Some(user.clone()));
 								member.roles.clone_from(roles);
 								member.nick.clone_from(nick);
 							})
@@ -354,7 +355,7 @@ impl State {
 					.find(|s| s.id == *server_id)
 					.map(|srv| {
 						srv.member_count -= 1;
-						srv.members.retain(|m| m.user.id != user.id);
+						srv.members.retain(|m| m.id() != user.id);
 					});
 			}
 			Event::ServerMembersChunk(server_id, ref members) => {
